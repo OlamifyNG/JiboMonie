@@ -12,6 +12,8 @@ dependencies:
     sdk: flutter
   salomon_bottom_bar:
   remixicon: ^1.4.1
+  http:
+  shared_preferences:
 dev_dependencies:
   flutter_test:
     sdk: flutter
