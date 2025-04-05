@@ -4,6 +4,7 @@ import 'package:remixicon/remixicon.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import 'misc/colors.dart';
+import 'auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +37,7 @@ class JiboMonieApp extends StatelessWidget {
 }
 
 // New Authentication Screen
+
 class AuthScreen extends StatefulWidget {
   const AuthScreen({Key? key}) : super(key: key);
 
@@ -49,21 +51,45 @@ class _AuthScreenState extends State<AuthScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _usernameController = TextEditingController();
   bool _isLoading = false;
+  String? _errorMessage;
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      if (_isLogin) {
+        // Login
+        await AuthService.login(
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
+      } else {
+        // Register
+        await AuthService.register(
+          username: _usernameController.text,
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
+      }
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isLoggedIn', true);
-
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/main');
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/main');
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -88,11 +114,30 @@ class _AuthScreenState extends State<AuthScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 30),
+                if (!_isLogin) ...[
+                  TextFormField(
+                    controller: _usernameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Username',
+                      prefixIcon: Icon(Icons.person),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a username';
+                      }
+                      if (value.length < 3) {
+                        return 'Username must be at least 3 characters';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(
                     labelText: 'Email',
-                    prefixIcon: Icon(RemixIcons.mail_line),
+                    prefixIcon: Icon(Icons.email),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
@@ -110,7 +155,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   controller: _passwordController,
                   decoration: const InputDecoration(
                     labelText: 'Password',
-                    prefixIcon: Icon(RemixIcons.lock_line),
+                    prefixIcon: Icon(Icons.lock),
                   ),
                   obscureText: true,
                   validator: (value) {
@@ -129,7 +174,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     controller: _confirmPasswordController,
                     decoration: const InputDecoration(
                       labelText: 'Confirm Password',
-                      prefixIcon: Icon(RemixIcons.lock_line),
+                      prefixIcon: Icon(Icons.lock),
                     ),
                     obscureText: true,
                     validator: (value) {
@@ -140,6 +185,14 @@ class _AuthScreenState extends State<AuthScreen> {
                     },
                   ),
                 ],
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _submit,
@@ -148,11 +201,14 @@ class _AuthScreenState extends State<AuthScreen> {
                       : Text(_isLogin ? 'Login' : 'Sign Up'),
                 ),
                 TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _isLogin = !_isLogin;
-                    });
-                  },
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          setState(() {
+                            _isLogin = !_isLogin;
+                            _errorMessage = null;
+                          });
+                        },
                   child: Text(
                     _isLogin
                         ? 'Create new account'
@@ -172,6 +228,7 @@ class _AuthScreenState extends State<AuthScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _usernameController.dispose();
     super.dispose();
   }
 }

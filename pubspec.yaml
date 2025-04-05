@@ -14,6 +14,9 @@ dependencies:
   remixicon: ^1.4.1
   http:
   shared_preferences:
+  flutter_dotenv:
+  device_info_plus:
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
