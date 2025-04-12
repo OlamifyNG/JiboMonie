@@ -1,8 +1,12 @@
+import 'package:dev/home.dart';
+import 'package:flutter/foundation.dart';
+
 import 'package:flutter/material.dart';
 import 'login.dart';
 import 'package:flutter_font_icons/flutter_font_icons.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:ui';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -55,8 +59,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
 
       // Send OTP
-      final otpUrl = Uri.parse(
-          "https://script.google.com/macros/s/AKfycbwhwuA_9cX7hysheXB6PzKfZ93AOcwgk2_xjtbde2Ol10Pi4Ueh63dG_idrfJBf-XE_/exec");
+      final otpUrl =
+          Uri.parse("https://jibomoniebackend.onrender.com/send-otp");
       try {
         final response = await http.post(
           otpUrl,
@@ -73,10 +77,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
           );
           debugPrint("OTP sent: ${response.body}");
         } else {
+          //For testing
+          // Navigator.push(
+          //   context,
+          //   MaterialPageRoute(builder: (context) => const HomeScreen()),
+          // );
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text("Failed to send OTP: ${response.reasonPhrase}")),
           );
+
           return;
         }
       } catch (e) {
@@ -88,6 +99,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } else if (_currentStep == 3) {
       // Verify OTP
       String otp = otpControllers.map((controller) => controller.text).join();
+      debugPrint(otp);
       if (otp.length != 6) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -104,7 +116,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       // Navigate to login or home screen
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
       return;
     }
@@ -275,21 +287,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       AuthButton(
+                          icon: FontAwesome.apple,
+                          label: "Apple",
+                          bgColor: Colors.white,
+                          textColor: Colors.white,
+                          onPressed: () {
+                            debugPrint("Tapped Apple!");
+                          }),
+                      AuthButton(
                         icon: FontAwesome.google,
                         label: "Google",
                         bgColor: Colors.white,
                         textColor: Colors.white,
                         onPressed: () {
                           debugPrint("Tapped Google!");
-                        },
-                      ),
-                      AuthButton(
-                        icon: FontAwesome.apple,
-                        label: "Apple",
-                        bgColor: Colors.white,
-                        textColor: Colors.white,
-                        onPressed: () {
-                          debugPrint("Tapped Apple!");
                         },
                       ),
                     ],
@@ -371,24 +382,34 @@ class CustomInputField extends StatelessWidget {
     this.obscure = false,
     Key? key,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      obscureText: obscure,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white54),
-        filled: true,
-        fillColor: Colors.white.withOpacity(0.1),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(30),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1), // translucent glass
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ),
+          child: TextField(
+            controller: controller,
+            obscureText: obscure,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: const TextStyle(color: Colors.white54),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
+            ),
+          ),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       ),
     );
   }
@@ -412,15 +433,32 @@ class AuthButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton.icon(
-      icon: Icon(icon, color: Colors.black),
-      label: Text(label, style: TextStyle(color: textColor)),
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: bgColor,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        shape: RoundedRectangleBorder(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(30),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Material(
+          color: bgColor.withOpacity(0.2), // glass effect background
           borderRadius: BorderRadius.circular(30),
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(30),
+            splashColor: Colors.white.withOpacity(0.1), // optional ripple color
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, color: textColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: TextStyle(color: textColor),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

@@ -1,3 +1,4 @@
+import 'home.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'login.dart'; // 👈 Import the login screen
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        // You can add more routes here like '/home': (context) => HomeScreen(),
+        '/home': (context) => const HomeScreen(),
       },
     );
   }
